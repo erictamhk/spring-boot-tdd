@@ -21,7 +21,7 @@ public class UserRepositoryTest {
     UserRepository userRepository;
 
     @Test
-    public void findByUsername_whenUserExists_returnUser(){
+    public void findByUsername_whenUserExists_returnUser() {
         User user = new User();
         user.setUsername("test-user");
         user.setDisplayName("test-display");
@@ -34,7 +34,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    public void findByUsername_whenUserDoseNotExists_returnNull(){
+    public void findByUsername_whenUserDoseNotExists_returnNull() {
         User inDB = userRepository.findByUsername("notexistinguser");
         assertThat(inDB).isNull();
     }
