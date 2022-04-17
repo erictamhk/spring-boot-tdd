@@ -2,6 +2,7 @@ package com.hoaxify.hoaxify.user;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.hoaxify.hoaxify.error.ApiError;
+import com.hoaxify.hoaxify.shared.CurrentUser;
 import com.hoaxify.hoaxify.shared.GenericResponse;
 import com.hoaxify.hoaxify.user.vm.UserVM;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +34,8 @@ public class UserController {
     }
 
     @GetMapping("/users")
-    Page<UserVM> getUsers(Pageable page) {
-        return userService.getUsers(page).map(UserVM::new);
+    Page<UserVM> getUsers(@CurrentUser User loggedUser, Pageable page) {
+        return userService.getUsers(loggedUser, page).map(UserVM::new);
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class})

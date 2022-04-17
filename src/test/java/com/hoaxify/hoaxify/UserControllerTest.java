@@ -4,16 +4,17 @@ import com.hoaxify.hoaxify.error.ApiError;
 import com.hoaxify.hoaxify.shared.GenericResponse;
 import com.hoaxify.hoaxify.user.User;
 import com.hoaxify.hoaxify.user.UserRepository;
+import com.hoaxify.hoaxify.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.support.BasicAuthenticationInterceptor;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -32,6 +33,8 @@ public class UserControllerTest {
     TestRestTemplate testRestTemplate;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    UserService userService;
 
     public <T> ResponseEntity<T> postSignup(Object request, Class<T> response) {
         return testRestTemplate.postForEntity(API_1_0_USERS, request, response);
@@ -39,11 +42,18 @@ public class UserControllerTest {
     }
 
     public <T> ResponseEntity<T> getUsers(ParameterizedTypeReference<T> responseType) {
-        return testRestTemplate.exchange(API_1_0_USERS, HttpMethod.GET, null, responseType);
+        return getUsers(API_1_0_USERS, responseType);
     }
 
     public <T> ResponseEntity<T> getUsers(String path, ParameterizedTypeReference<T> responseType) {
         return testRestTemplate.exchange(path, HttpMethod.GET, null, responseType);
+    }
+
+    private void authenticate(String username) {
+        testRestTemplate
+                .getRestTemplate()
+                .getInterceptors()
+                .add(new BasicAuthenticationInterceptor(username, "P4ssword"));
     }
 
     @BeforeEach
@@ -330,6 +340,17 @@ public class UserControllerTest {
         ResponseEntity<TestPage<Object>> response = getUsers(path, new ParameterizedTypeReference<TestPage<Object>>() {
         });
         assertThat(response.getBody().getNumber()).isEqualTo(0);
+    }
+
+    @Test
+    public void getUsers_whenUserLoggedIn_receivePageWithoutLoggedInUser() {
+        userService.save(TestUtil.createValidUser("user1"));
+        userService.save(TestUtil.createValidUser("user2"));
+        userService.save(TestUtil.createValidUser("user3"));
+        authenticate("user1");
+        ResponseEntity<TestPage<Object>> response = getUsers(new ParameterizedTypeReference<TestPage<Object>>() {
+        });
+        assertThat(response.getBody().getTotalElements()).isEqualTo(2);
     }
 
 }
