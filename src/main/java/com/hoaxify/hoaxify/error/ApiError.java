@@ -22,6 +22,7 @@ public class ApiError {
     private Map<String, String> validationErrors;
 
     public ApiError(int status, String message, String url) {
+        super();
         this.status = status;
         this.message = message;
         this.url = url;
