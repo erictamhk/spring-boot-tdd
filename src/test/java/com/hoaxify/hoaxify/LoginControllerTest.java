@@ -113,4 +113,59 @@ public class LoginControllerTest {
         assertThat(id).isEqualTo(inDB.getId());
     }
 
+    @Test
+    public void postLogin_withValidCredentials_receiveLoggedInUserImage() {
+        User user = TestUtil.createValidUser();
+        User inDB = userService.save(user);
+        authenticate();
+        ResponseEntity<Map<String, Object>> response = login(new ParameterizedTypeReference<Map<String, Object>>() {
+        });
+
+        Map<String, Object> body = response.getBody();
+        String image = (String) body.get("image");
+
+        assertThat(image).isEqualTo(inDB.getImage());
+    }
+
+    @Test
+    public void postLogin_withValidCredentials_receiveLoggedInUserDisplayName() {
+        User user = TestUtil.createValidUser();
+        User inDB = userService.save(user);
+        authenticate();
+        ResponseEntity<Map<String, Object>> response = login(new ParameterizedTypeReference<Map<String, Object>>() {
+        });
+
+        Map<String, Object> body = response.getBody();
+        String displayName = (String) body.get("displayName");
+
+        assertThat(displayName).isEqualTo(inDB.getDisplayName());
+    }
+
+    @Test
+    public void postLogin_withValidCredentials_receiveLoggedInUserUsername() {
+        User user = TestUtil.createValidUser();
+        User inDB = userService.save(user);
+        authenticate();
+        ResponseEntity<Map<String, Object>> response = login(new ParameterizedTypeReference<Map<String, Object>>() {
+        });
+
+        Map<String, Object> body = response.getBody();
+        String username = (String) body.get("username");
+
+        assertThat(username).isEqualTo(inDB.getUsername());
+    }
+
+    @Test
+    public void postLogin_withValidCredentials_notReceiveLoggedInUserPassword() {
+        User user = TestUtil.createValidUser();
+        userService.save(user);
+        authenticate();
+        ResponseEntity<Map<String, Object>> response = login(new ParameterizedTypeReference<Map<String, Object>>() {
+        });
+
+        Map<String, Object> body = response.getBody();
+
+        assertThat(body.containsKey("password")).isFalse();
+    }
+
 }
