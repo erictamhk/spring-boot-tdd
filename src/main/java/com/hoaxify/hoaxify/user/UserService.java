@@ -1,13 +1,11 @@
 package com.hoaxify.hoaxify.user;
 
 import com.hoaxify.hoaxify.error.NotFoundException;
+import com.hoaxify.hoaxify.user.vm.UpdateUserVM;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.stream.DoubleStream;
 
 @Service
 public class UserService {
@@ -40,5 +38,11 @@ public class UserService {
             throw new NotFoundException(username + " not found");
         }
         return inDB;
+    }
+
+    public User update(long id, UpdateUserVM userUpdate) {
+        User inDB = userRepository.getById(id);
+        inDB.setDisplayName(userUpdate.getDisplayName());
+        return userRepository.save(inDB);
     }
 }
