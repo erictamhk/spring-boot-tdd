@@ -49,6 +49,12 @@ public class UserControllerTest {
         return testRestTemplate.exchange(path, HttpMethod.GET, null, responseType);
     }
 
+    public <T> ResponseEntity<T> getUser(String username, Class<T> response) {
+        String path = API_1_0_USERS + "/" + username;
+        return testRestTemplate.getForEntity(path, response);
+
+    }
+
     private void authenticate(String username) {
         testRestTemplate
                 .getRestTemplate()
@@ -351,6 +357,41 @@ public class UserControllerTest {
         ResponseEntity<TestPage<Object>> response = getUsers(new ParameterizedTypeReference<TestPage<Object>>() {
         });
         assertThat(response.getBody().getTotalElements()).isEqualTo(2);
+    }
+
+    @Test
+    public void getUserByUsername_whenUserExist_receiveOk() {
+        String username = "test-user";
+        userService.save(TestUtil.createValidUser(username));
+        ResponseEntity<Object> response = getUser(username, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void getUserByUsername_whenUserExist_receiveUserWithoutPassword() {
+        String username = "test-user";
+        userService.save(TestUtil.createValidUser(username));
+        ResponseEntity<String> response = getUser(username, String.class);
+        assertThat(response.getBody().contains("password")).isFalse();
+    }
+
+    @Test
+    public void getUserByUsername_whenUserDoseNotExist_receiveNotFound() {
+        ResponseEntity<Object> response = getUser("unknown-user", Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    public void getUserByUsername_whenUserDoseNotExist_receiveApiError() {
+        ResponseEntity<ApiError> response = getUser("unknown-user", ApiError.class);
+        assertThat(response.getBody().getMessage().contains("unknown-user")).isTrue();
+    }
+
+    @Test
+    public void putUser_whenUnauthorizedUserSendsTheRequest_receiveUnauthorized() {
+        String path = API_1_0_USERS + "/123";
+        ResponseEntity<Object> response = testRestTemplate.exchange(path, HttpMethod.PUT, null, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
 }
