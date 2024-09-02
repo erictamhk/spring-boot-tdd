@@ -4,19 +4,23 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.io.File;
+
 @Configuration
 @ConfigurationProperties(prefix = "hoaxify")
 @Data
 public class AppConfiguration {
     String uploadPath;
-    String profileImageFolderPath = "profile";
-    String attachmentsFolderPath = "attachments";
 
-    public String getProfileImageFolderPath() {
-        return uploadPath + "/" + profileImageFolderPath;
+    String profileImagesFolder = "profile";
+
+    String attachmentsFolder = "attachments";
+
+    public String getFullProfileImagesPath() {
+        return this.uploadPath + "/" + this.profileImagesFolder;
     }
 
-    public String getAttachmentsFolderPath() {
-        return uploadPath + "/" + attachmentsFolderPath;
+    public String getFullAttachmentsPath() {
+        return this.uploadPath + "/" + this.attachmentsFolder;
     }
 }
