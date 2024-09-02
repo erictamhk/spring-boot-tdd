@@ -31,6 +31,13 @@ public class StaticResourceTest {
     @Autowired
     MockMvc mockMvc;
 
+
+    @AfterEach
+    public void cleanup() throws IOException {
+        FileUtils.cleanDirectory(new File(appConfiguration.getFullProfileImagesPath()));
+        FileUtils.cleanDirectory(new File(appConfiguration.getFullAttachmentsPath()));
+    }
+
     @Test
     public void checkStaticFolder_whenAppIsInitialized_uploadFolderMustExist() {
         File uploadFolder = new File(appConfiguration.getUploadPath());
@@ -97,11 +104,5 @@ public class StaticResourceTest {
 
         String cacheControl = result.getResponse().getHeaderValue("Cache-Control").toString();
         assertThat(cacheControl).containsIgnoringCase("max-age=31536000");
-    }
-
-    @AfterEach
-    public void cleanup() throws IOException {
-        FileUtils.cleanDirectory(new File(appConfiguration.getFullProfileImagesPath()));
-        FileUtils.cleanDirectory(new File(appConfiguration.getFullAttachmentsPath()));
     }
 }
