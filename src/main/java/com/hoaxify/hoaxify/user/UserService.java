@@ -54,6 +54,7 @@ public class UserService {
         if (userUpdate.getImage() != null) {
             try {
                 String savedImageName = fileService.saveProfileImage(userUpdate.getImage());
+                fileService.deleteProfileImage(inDB.getImage());
                 inDB.setImage(savedImageName);
             } catch (IOException e) {
                 e.printStackTrace();
