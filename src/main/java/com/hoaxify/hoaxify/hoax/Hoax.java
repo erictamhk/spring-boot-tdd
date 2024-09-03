@@ -1,5 +1,6 @@
 package com.hoaxify.hoaxify.hoax;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hoaxify.hoaxify.user.User;
 import lombok.Data;
 
