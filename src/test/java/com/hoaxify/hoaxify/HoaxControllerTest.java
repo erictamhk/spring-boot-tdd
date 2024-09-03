@@ -84,6 +84,11 @@ public class HoaxControllerTest {
         return testRestTemplate.exchange(path, HttpMethod.GET, null, responseType);
     }
 
+    private <T> ResponseEntity<T> getOldHoaxes(long hoaxId, ParameterizedTypeReference<T> responseType) {
+        String path = API_1_0_HOAXES + "/" + hoaxId + "?direction=before&page=0&size=5&sort=id,desc";
+        return testRestTemplate.exchange(path, HttpMethod.GET, null, responseType);
+    }
+
     @Test
     public void postHoax_whenHoaxIsValidAndUserIsAuthorized_receiveOk() {
         String username = "user1";
@@ -332,4 +337,39 @@ public class HoaxControllerTest {
         assertThat(response.getBody().getTotalElements()).isEqualTo(5);
     }
 
+    @Test
+    public void getOldHoaxes_WhenThereAreNoHoaxes_receiveOk() {
+        ResponseEntity<Object> response = getOldHoaxes(5, new ParameterizedTypeReference<Object>() {
+        });
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void getOldHoaxes_WhenThereAreHoaxes_receivePageWithItemsProvidedId() {
+        String username = "user1";
+        User userWithFourHoaxes = userService.save(TestUtil.createValidUser(username));
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        Hoax fourth = hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        ResponseEntity<TestPage<Object>> response = getOldHoaxes(fourth.getId(), new ParameterizedTypeReference<TestPage<Object>>() {
+        });
+        assertThat(response.getBody().getTotalElements()).isEqualTo(3);
+    }
+
+
+    @Test
+    public void getOldHoaxes_WhenThereAreHoaxes_receivePageWithHoaxVMBeforeProvidedId() {
+        String username = "user1";
+        User userWithFourHoaxes = userService.save(TestUtil.createValidUser(username));
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        Hoax fourth = hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        ResponseEntity<TestPage<HoaxVM>> response = getOldHoaxes(fourth.getId(), new ParameterizedTypeReference<TestPage<HoaxVM>>() {
+        });
+        assertThat(response.getBody().getContent().get(0).getDate()).isGreaterThan(0);
+    }
 }
