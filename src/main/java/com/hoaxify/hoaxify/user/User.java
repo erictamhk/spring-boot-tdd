@@ -39,7 +39,7 @@ public class User implements UserDetails {
 
     private String image;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user")
     private List<Hoax> hoaxes;
 
     @Override

@@ -17,6 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.BasicAuthenticationInterceptor;
 import org.springframework.test.context.ActiveProfiles;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceUnit;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -38,6 +41,9 @@ public class HoaxControllerTest {
 
     @Autowired
     HoaxRepository hoaxRepository;
+
+    @PersistenceUnit
+    private EntityManagerFactory entityManagerFactory;
 
     private void authenticate(String username) {
         testRestTemplate
@@ -181,12 +187,14 @@ public class HoaxControllerTest {
     @Test
     public void postHoax_whenHoaxIsValidAndUserIsAuthorized_hoaxCanBeAccessedFromUserEntity() {
         String username = "user1";
-        userService.save(TestUtil.createValidUser(username));
+        User user = userService.save(TestUtil.createValidUser(username));
         authenticate(username);
         Hoax hoax = TestUtil.createValidHoax();
         postHoax(hoax, Object.class);
 
-        User userInDB = userRepository.findByUsername(username);
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        User userInDB = entityManager.find(User.class, user.getId());
         assertThat(userInDB.getHoaxes().size()).isEqualTo(1);
     }
 
