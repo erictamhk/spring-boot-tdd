@@ -75,8 +75,13 @@ public class HoaxControllerTest {
         return testRestTemplate.postForEntity(API_1_0_HOAXES, hoax, responseType);
     }
 
-    private <T> ResponseEntity<T> getHoax(ParameterizedTypeReference<T> responseType) {
+    private <T> ResponseEntity<T> getHoaxes(ParameterizedTypeReference<T> responseType) {
         return testRestTemplate.exchange(API_1_0_HOAXES, HttpMethod.GET, null, responseType);
+    }
+
+    private <T> ResponseEntity<T> getHoaxesOfUser(String username, ParameterizedTypeReference<T> responseType) {
+        String path = "/api/1.0/users/" + username + "/hoaxes";
+        return testRestTemplate.exchange(path, HttpMethod.GET, null, responseType);
     }
 
     @Test
@@ -211,14 +216,14 @@ public class HoaxControllerTest {
 
     @Test
     public void getHoaxes_whenThereAreNoHoaxes_receiveOk() {
-        ResponseEntity<Object> response = getHoax(new ParameterizedTypeReference<Object>() {
+        ResponseEntity<Object> response = getHoaxes(new ParameterizedTypeReference<Object>() {
         });
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
     public void getHoaxes_whenThereAreNoHoaxes_receivePageWithZeroItems() {
-        ResponseEntity<TestPage<Object>> response = getHoax(new ParameterizedTypeReference<TestPage<Object>>() {
+        ResponseEntity<TestPage<Object>> response = getHoaxes(new ParameterizedTypeReference<TestPage<Object>>() {
         });
         assertThat(response.getBody().getTotalElements()).isEqualTo(0);
     }
@@ -232,7 +237,7 @@ public class HoaxControllerTest {
         hoaxService.save(user, TestUtil.createValidHoax());
         hoaxService.save(user, TestUtil.createValidHoax());
         hoaxService.save(user, TestUtil.createValidHoax());
-        ResponseEntity<TestPage<Object>> response = getHoax(new ParameterizedTypeReference<TestPage<Object>>() {
+        ResponseEntity<TestPage<Object>> response = getHoaxes(new ParameterizedTypeReference<TestPage<Object>>() {
         });
         assertThat(response.getBody().getTotalElements()).isEqualTo(4);
     }
@@ -244,7 +249,7 @@ public class HoaxControllerTest {
         authenticate(username);
         hoaxService.save(user, TestUtil.createValidHoax());
 
-        ResponseEntity<TestPage<HoaxVM>> response = getHoax(new ParameterizedTypeReference<TestPage<HoaxVM>>() {
+        ResponseEntity<TestPage<HoaxVM>> response = getHoaxes(new ParameterizedTypeReference<TestPage<HoaxVM>>() {
         });
         HoaxVM storedHoax = response.getBody().getContent().get(0);
         assertThat(storedHoax.getUser().getUsername()).isEqualTo(username);
@@ -258,6 +263,73 @@ public class HoaxControllerTest {
         Hoax hoax = TestUtil.createValidHoax();
         ResponseEntity<HoaxVM> response = postHoax(hoax, HoaxVM.class);
         assertThat(response.getBody().getUser().getUsername()).isEqualTo(username);
+    }
+
+    @Test
+    public void getHoaxesOfUser_whenUserExists_receiveOk() {
+        String username = "user1";
+        userService.save(TestUtil.createValidUser(username));
+        ResponseEntity<Object> response = getHoaxesOfUser(username, new ParameterizedTypeReference<Object>() {
+        });
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void getHoaxesOfUser_whenUserDoesNotExists_receiveNotFound() {
+        ResponseEntity<Object> response = getHoaxesOfUser("unknown-user", new ParameterizedTypeReference<Object>() {
+        });
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    public void getHoaxesOfUser_whenUserExists_receivePageWithZeroHoaxes() {
+        String username = "user1";
+        userService.save(TestUtil.createValidUser(username));
+        ResponseEntity<TestPage<HoaxVM>> response = getHoaxesOfUser(username, new ParameterizedTypeReference<TestPage<HoaxVM>>() {
+        });
+        assertThat(response.getBody().getTotalElements()).isEqualTo(0);
+    }
+
+    @Test
+    public void getHoaxesOfUser_whenUserExistsWithHoax_receivePageWithHoaxWM() {
+        String username = "user1";
+        User user = userService.save(TestUtil.createValidUser(username));
+        hoaxService.save(user, TestUtil.createValidHoax());
+
+        ResponseEntity<TestPage<HoaxVM>> response = getHoaxesOfUser(username, new ParameterizedTypeReference<TestPage<HoaxVM>>() {
+        });
+        HoaxVM storedHoax = response.getBody().getContent().get(0);
+        assertThat(storedHoax.getUser().getUsername()).isEqualTo(username);
+    }
+
+    @Test
+    public void getHoaxesOfUser_whenUserExistsWithMultipleHoaxes_receivePageWithMatchingHoaxesCount() {
+        String username = "user1";
+        User userWithFourHoaxes = userService.save(TestUtil.createValidUser(username));
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+        hoaxService.save(userWithFourHoaxes, TestUtil.createValidHoax());
+
+        ResponseEntity<TestPage<HoaxVM>> response = getHoaxesOfUser(username, new ParameterizedTypeReference<TestPage<HoaxVM>>() {
+        });
+        assertThat(response.getBody().getTotalElements()).isEqualTo(4);
+    }
+
+    @Test
+    public void getHoaxesOfUser_whenMultipleUserExistsWithMultipleHoaxes_receivePageWithMatchingHoaxesCount() {
+        User userWithThreeHoaxes = userService.save(TestUtil.createValidUser("user1"));
+        IntStream.rangeClosed(1, 3).forEach(i -> {
+            hoaxService.save(userWithThreeHoaxes, TestUtil.createValidHoax());
+        });
+        User userWithFiveHoaxes = userService.save(TestUtil.createValidUser("user2"));
+        IntStream.rangeClosed(1, 5).forEach(i -> {
+            hoaxService.save(userWithFiveHoaxes, TestUtil.createValidHoax());
+        });
+
+        ResponseEntity<TestPage<HoaxVM>> response = getHoaxesOfUser(userWithFiveHoaxes.getUsername(), new ParameterizedTypeReference<TestPage<HoaxVM>>() {
+        });
+        assertThat(response.getBody().getTotalElements()).isEqualTo(5);
     }
 
 }
