@@ -3,8 +3,10 @@ package com.hoaxify.hoaxify;
 import com.hoaxify.hoaxify.error.ApiError;
 import com.hoaxify.hoaxify.hoax.Hoax;
 import com.hoaxify.hoaxify.hoax.HoaxRepository;
+import com.hoaxify.hoaxify.user.User;
 import com.hoaxify.hoaxify.user.UserRepository;
 import com.hoaxify.hoaxify.user.UserService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,11 @@ public class HoaxControllerTest {
         hoaxRepository.deleteAll();
         userRepository.deleteAll();
         testRestTemplate.getRestTemplate().getInterceptors().clear();
+    }
+
+    @AfterEach
+    public void cleanupAfter() {
+        hoaxRepository.deleteAll();
     }
 
     private <T> ResponseEntity<T> postHoax(Hoax hoax, Class<T> responseType) {
@@ -158,5 +165,29 @@ public class HoaxControllerTest {
         assertThat(validationErrors.get("content")).isNotNull();
     }
 
+    @Test
+    public void postHoax_whenHoaxIsValidAndUserIsAuthorized_hoaxSaveToDatabaseWithAuthenticatedUserInfo() {
+        String username = "user1";
+        userService.save(TestUtil.createValidUser(username));
+        authenticate(username);
+        Hoax hoax = TestUtil.createValidHoax();
+        postHoax(hoax, Object.class);
+
+        Hoax inDB = hoaxRepository.findAll().get(0);
+
+        assertThat(inDB.getUser().getUsername()).isEqualTo(username);
+    }
+
+    @Test
+    public void postHoax_whenHoaxIsValidAndUserIsAuthorized_hoaxCanBeAccessedFromUserEntity() {
+        String username = "user1";
+        userService.save(TestUtil.createValidUser(username));
+        authenticate(username);
+        Hoax hoax = TestUtil.createValidHoax();
+        postHoax(hoax, Object.class);
+
+        User userInDB = userRepository.findByUsername(username);
+        assertThat(userInDB.getHoaxes().size()).isEqualTo(1);
+    }
 
 }

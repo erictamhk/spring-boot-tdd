@@ -1,5 +1,6 @@
 package com.hoaxify.hoaxify.hoax;
 
+import com.hoaxify.hoaxify.user.User;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -13,8 +14,9 @@ public class HoaxService {
         this.hoaxRepository = hoaxRepository;
     }
 
-    public void save(Hoax hoax) {
+    public void save(User user, Hoax hoax) {
         hoax.setTimestamp(new Date());
+        hoax.setUser(user);
         hoaxRepository.save(hoax);
     }
 }
