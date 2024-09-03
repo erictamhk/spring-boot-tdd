@@ -6,9 +6,12 @@ import com.hoaxify.hoaxify.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/1.0")
@@ -33,8 +36,13 @@ public class HoaxController {
     }
 
     @GetMapping("/hoaxes/{id:[0-9]+}")
-    Page<HoaxVM> getHoaxesRelative(@PathVariable long id, Pageable pageable) {
-        return hoaxService.getOldHoaxes(id, pageable).map(HoaxVM::new);
+    ResponseEntity<?> getHoaxesRelative(@PathVariable long id, Pageable pageable,
+                                        @RequestParam(name = "direction", defaultValue = "after") String direction) {
+        if (!direction.equalsIgnoreCase("after")) {
+            return ResponseEntity.ok(hoaxService.getOldHoaxes(id, pageable).map(HoaxVM::new));
+        }
+        List<HoaxVM> newHoaxes = hoaxService.getNewHoaxes(id, pageable).stream().map(HoaxVM::new).collect(Collectors.toList());
+        return ResponseEntity.ok(newHoaxes);
     }
 
     @GetMapping("users/{username}/hoaxes/{id:[0-9]+}")
