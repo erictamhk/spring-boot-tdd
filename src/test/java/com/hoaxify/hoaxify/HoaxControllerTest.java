@@ -688,7 +688,6 @@ public class HoaxControllerTest {
         assertThat(response.getBody().getMessage()).isNotNull();
     }
 
-
     @Test
     public void deleteHoax_whenUserIsAuthorized_hoaxRemoveFromDatabase() {
         String username = "user1";
@@ -698,6 +697,26 @@ public class HoaxControllerTest {
         deleteHoax(hoax.getId(), Object.class);
         Optional<Hoax> inDB = hoaxRepository.findById(hoax.getId());
         assertThat(inDB.isPresent()).isFalse();
+    }
+
+    @Test
+    public void deleteHoax_whenHoaxIsOwnedByAnotherUser_receiveForbidden() {
+        String username = "user1";
+        userService.save(TestUtil.createValidUser(username));
+        authenticate(username);
+        User hoaxOwner = userService.save((TestUtil.createValidUser("hoax-owner")));
+        Hoax hoax = hoaxService.save(hoaxOwner, TestUtil.createValidHoax());
+        ResponseEntity<Object> response = deleteHoax(hoax.getId(), Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    public void deleteHoax_whenHoaxNotExist_receiveForbidden() {
+        String username = "user1";
+        userService.save(TestUtil.createValidUser(username));
+        authenticate(username);
+        ResponseEntity<Object> response = deleteHoax(777777, Object.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
 }
