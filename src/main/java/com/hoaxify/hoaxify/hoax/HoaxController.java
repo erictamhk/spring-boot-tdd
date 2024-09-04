@@ -2,6 +2,7 @@ package com.hoaxify.hoaxify.hoax;
 
 import com.hoaxify.hoaxify.hoax.vm.HoaxVM;
 import com.hoaxify.hoaxify.shared.CurrentUser;
+import com.hoaxify.hoaxify.shared.GenericResponse;
 import com.hoaxify.hoaxify.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -52,5 +53,11 @@ public class HoaxController {
         }
         List<HoaxVM> newHoaxes = hoaxService.getNewHoaxes(id, username, pageable).stream().map(HoaxVM::new).collect(Collectors.toList());
         return ResponseEntity.ok(newHoaxes);
+    }
+
+    @DeleteMapping("/hoaxes/{id:[0-9]+}")
+    GenericResponse deleteHoax(@PathVariable long id){
+        hoaxService.deleteHoax(id);
+        return new GenericResponse("Hoax is removed!");
     }
 }
