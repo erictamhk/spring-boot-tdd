@@ -5,6 +5,7 @@ import com.hoaxify.hoaxify.file.FileAttachment;
 import com.hoaxify.hoaxify.user.UserRepository;
 import com.hoaxify.hoaxify.user.UserService;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,11 @@ public class FileUploadControllerTest {
     public void init() throws IOException {
         userRepository.deleteAll();
         testRestTemplate.getRestTemplate().getInterceptors().clear();
+        FileUtils.cleanDirectory(new File(appConfiguration.getFullAttachmentsPath()));
+    }
+
+    @AfterEach
+    public void cleanup() throws IOException {
         FileUtils.cleanDirectory(new File(appConfiguration.getFullAttachmentsPath()));
     }
 
@@ -107,6 +113,19 @@ public class FileUploadControllerTest {
         });
         assertThat(response.getBody().getName()).isNotNull();
         assertThat(response.getBody().getName()).isNotEqualTo("profile.png");
+    }
+
+    @Test
+    public void uploadFile_withImageFromAuthorizedUser_imageSavedToFolder() {
+        String username = "user1";
+        userService.save(TestUtil.createValidUser(username));
+        authenticate(username);
+
+        ResponseEntity<FileAttachment> response = uploadFile(getRequestEntity(), new ParameterizedTypeReference<FileAttachment>() {
+        });
+        String imagePath = appConfiguration.getFullAttachmentsPath() + "/" + response.getBody().getName();
+        File storedImage = new File(imagePath);
+        assertThat(storedImage.exists()).isTrue();
     }
 
 }
