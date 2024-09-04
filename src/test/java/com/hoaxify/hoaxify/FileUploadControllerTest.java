@@ -1,6 +1,7 @@
 package com.hoaxify.hoaxify;
 
 import com.hoaxify.hoaxify.configuration.AppConfiguration;
+import com.hoaxify.hoaxify.file.FileAttachment;
 import com.hoaxify.hoaxify.user.UserRepository;
 import com.hoaxify.hoaxify.user.UserService;
 import org.apache.commons.io.FileUtils;
@@ -83,6 +84,29 @@ public class FileUploadControllerTest {
         ResponseEntity<Object> response = uploadFile(getRequestEntity(), new ParameterizedTypeReference<Object>() {
         });
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    public void uploadFile_withImageFromAuthorizedUser_receiveFileAttachmentWithDate() {
+        String username = "user1";
+        userService.save(TestUtil.createValidUser(username));
+        authenticate(username);
+
+        ResponseEntity<FileAttachment> response = uploadFile(getRequestEntity(), new ParameterizedTypeReference<FileAttachment>() {
+        });
+        assertThat(response.getBody().getDate()).isNotNull();
+    }
+
+    @Test
+    public void uploadFile_withImageFromAuthorizedUser_receiveFileAttachmentWithRandomName() {
+        String username = "user1";
+        userService.save(TestUtil.createValidUser(username));
+        authenticate(username);
+
+        ResponseEntity<FileAttachment> response = uploadFile(getRequestEntity(), new ParameterizedTypeReference<FileAttachment>() {
+        });
+        assertThat(response.getBody().getName()).isNotNull();
+        assertThat(response.getBody().getName()).isNotEqualTo("profile.png");
     }
 
 }
