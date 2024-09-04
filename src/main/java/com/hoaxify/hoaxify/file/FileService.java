@@ -19,12 +19,14 @@ public class FileService {
     AppConfiguration appConfiguration;
     Tika tika;
 
+    FileAttachmentRepository fileAttachmentRepository;
 
-    public FileService(AppConfiguration appConfiguration) {
+    public FileService(AppConfiguration appConfiguration, FileAttachmentRepository fileAttachmentRepository) {
         this.appConfiguration = appConfiguration;
+        this.fileAttachmentRepository = fileAttachmentRepository;
         this.tika = new Tika();
     }
-    
+
     private static String getRandomName() {
         return UUID.randomUUID().toString().replaceAll("-", "");
     }
@@ -59,9 +61,10 @@ public class FileService {
         try {
             byte[] fileAsByte = file.getBytes();
             FileUtils.writeByteArrayToFile(target, fileAsByte);
+            fileAttachment.setFileType(detectType(fileAsByte));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return fileAttachment;
+        return fileAttachmentRepository.save(fileAttachment);
     }
 }

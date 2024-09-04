@@ -2,6 +2,7 @@ package com.hoaxify.hoaxify;
 
 import com.hoaxify.hoaxify.configuration.AppConfiguration;
 import com.hoaxify.hoaxify.file.FileAttachment;
+import com.hoaxify.hoaxify.file.FileAttachmentRepository;
 import com.hoaxify.hoaxify.user.UserRepository;
 import com.hoaxify.hoaxify.user.UserService;
 import org.apache.commons.io.FileUtils;
@@ -40,9 +41,13 @@ public class FileUploadControllerTest {
     @Autowired
     AppConfiguration appConfiguration;
 
+    @Autowired
+    FileAttachmentRepository fileAttachmentRepository;
+
     @BeforeEach
     public void init() throws IOException {
         userRepository.deleteAll();
+        fileAttachmentRepository.deleteAll();
         testRestTemplate.getRestTemplate().getInterceptors().clear();
         FileUtils.cleanDirectory(new File(appConfiguration.getFullAttachmentsPath()));
     }
@@ -126,6 +131,29 @@ public class FileUploadControllerTest {
         String imagePath = appConfiguration.getFullAttachmentsPath() + "/" + response.getBody().getName();
         File storedImage = new File(imagePath);
         assertThat(storedImage.exists()).isTrue();
+    }
+
+    @Test
+    public void uploadFile_withImageFromAuthorizedUser_FileAttachmentSaveToDatabase() {
+        String username = "user1";
+        userService.save(TestUtil.createValidUser(username));
+        authenticate(username);
+
+        uploadFile(getRequestEntity(), new ParameterizedTypeReference<FileAttachment>() {
+        });
+        assertThat(fileAttachmentRepository.count()).isEqualTo(1);
+    }
+
+    @Test
+    public void uploadFile_withImageFromAuthorizedUser_FileAttachmentStoredWithFileType() {
+        String username = "user1";
+        userService.save(TestUtil.createValidUser(username));
+        authenticate(username);
+
+        uploadFile(getRequestEntity(), new ParameterizedTypeReference<FileAttachment>() {
+        });
+        FileAttachment storedFile = fileAttachmentRepository.findAll().get(0);
+        assertThat(storedFile.getFileType()).isEqualTo("image/png");
     }
 
 }
