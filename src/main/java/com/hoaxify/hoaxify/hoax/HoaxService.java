@@ -2,6 +2,7 @@ package com.hoaxify.hoaxify.hoax;
 
 import com.hoaxify.hoaxify.file.FileAttachment;
 import com.hoaxify.hoaxify.file.FileAttachmentRepository;
+import com.hoaxify.hoaxify.file.FileService;
 import com.hoaxify.hoaxify.user.User;
 import com.hoaxify.hoaxify.user.UserService;
 import org.springframework.data.domain.Page;
@@ -25,10 +26,15 @@ public class HoaxService {
 
     FileAttachmentRepository fileAttachmentRepository;
 
-    public HoaxService(HoaxRepository hoaxRepository, UserService userService, FileAttachmentRepository fileAttachmentRepository) {
+    FileService fileService;
+
+    public HoaxService(HoaxRepository hoaxRepository, UserService userService,
+                       FileAttachmentRepository fileAttachmentRepository,
+                       FileService fileService) {
         this.hoaxRepository = hoaxRepository;
         this.userService = userService;
         this.fileAttachmentRepository = fileAttachmentRepository;
+        this.fileService = fileService;
     }
 
     public Hoax save(User user, Hoax hoax) {
@@ -91,6 +97,10 @@ public class HoaxService {
     }
 
     public void deleteHoax(long id) {
+        Hoax hoax = hoaxRepository.getOne(id);
+        if(hoax.getAttachment() != null){
+            fileService.deleteAttachmentImage(hoax.getAttachment().getName());
+        }
         hoaxRepository.deleteById(id);
     }
 }
